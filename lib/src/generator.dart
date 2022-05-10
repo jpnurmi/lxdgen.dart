@@ -11,12 +11,25 @@ Library generate(List<Class> defs, Iterable<String> filter) {
   }
 
   return Library((b) => b
+    ..directives.addAll([
+      Directive.import('package:collection/collection.dart'),
+      Directive.import('package:json_annotation/json_annotation.dart'),
+      Directive.import('package:meta/meta.dart'),
+      Directive.part('lxd_types.g.dart'), // TODO
+    ])
     ..body.addAll(defs.where(accept).map((d) {
       return d.rebuild((b) => b
         ..name = d.name
-        ..constructors.add(generateConstructor(d))
-        ..annotations.replace([refer('immutable')])
+        ..annotations.replace([
+          refer('immutable'),
+          refer('JsonSerializable').newInstance([]),
+        ])
+        ..constructors.addAll([
+          generateConstructor(d),
+          generateFromJson(d),
+        ])
         ..methods.addAll([
+          generateToJson(d),
           generateEquals(d),
           generateHashCode(d),
           generateToString(d),
@@ -34,6 +47,29 @@ Constructor generateConstructor(Class def) {
       ..named = true
       ..toThis = true
       ..required = true))));
+}
+
+Constructor generateFromJson(Class def) {
+  assert(def.fields.isNotEmpty);
+
+  return Constructor((b) => b
+    ..factory = true
+    ..name = 'fromJson'
+    ..requiredParameters.add(Parameter((b) => b
+      ..name = 'json'
+      ..type = refer('Map<String, dynamic>')))
+    ..lambda = true
+    ..body = refer('_\$${def.name}FromJson').newInstance([refer('json')]).code);
+}
+
+Method generateToJson(Class def) {
+  assert(def.fields.isNotEmpty);
+
+  return Method((b) => b
+    ..name = 'toJson'
+    ..returns = refer('Map<String, dynamic>')
+    ..lambda = true
+    ..body = refer('_\$${def.name}ToJson').call([refer('this')]).code);
 }
 
 Method generateEquals(Class def) {
