@@ -17,24 +17,28 @@ Library generate(List<Class> defs, Iterable<String> filter) {
       Directive.import('package:meta/meta.dart'),
       Directive.part('lxd_types.g.dart'), // TODO
     ])
-    ..body.addAll(defs.where(accept).map((d) {
-      return d.rebuild((b) => b
-        ..name = d.name
-        ..annotations.replace([
-          refer('immutable'),
-          refer('JsonSerializable').newInstance([]),
-        ])
-        ..constructors.addAll([
-          generateConstructor(d),
-          generateFromJson(d),
-        ])
-        ..methods.addAll([
-          generateToJson(d),
-          generateEquals(d),
-          generateHashCode(d),
-          generateToString(d),
-        ]));
-    })));
+    ..body.addAll([
+      Code('typedef LxdStatusCode = int;'),
+      Code('typedef LxdInstanceType = String;'),
+      ...defs.where(accept).map((d) {
+        return d.rebuild((b) => b
+          ..name = d.name
+          ..annotations.replace([
+            refer('immutable'),
+            refer('JsonSerializable').newInstance([]),
+          ])
+          ..constructors.addAll([
+            generateConstructor(d),
+            generateFromJson(d),
+          ])
+          ..methods.addAll([
+            generateToJson(d),
+            generateEquals(d),
+            generateHashCode(d),
+            generateToString(d),
+          ]));
+      })
+    ]));
 }
 
 Constructor generateConstructor(Class def) {
