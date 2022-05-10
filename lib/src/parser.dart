@@ -30,7 +30,12 @@ List<Class> parseDefinitions(YamlMap definitions) {
       case 'object':
         return 'Map<String, dynamic>';
       case 'string':
-        return 'String';
+        switch (property['format']) {
+          case 'date-time':
+            return 'DateTime';
+          default:
+            return 'String';
+        }
       default:
         return parseTypeRef(property[r'$ref']) ?? type;
     }
